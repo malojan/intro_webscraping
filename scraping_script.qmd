@@ -1,0 +1,173 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r}
+# Import packages
+
+needs(tidyverse, rvest)
+```
+
+Principales fonctions d'`rvest`  : 
+
+- `read_html()` : Extraction du code source d'une page HTML 
+- `html_element()` : Selection d'un élément sur cette page
+- `html_text()` : Extraction du texte de cet élément
+- `html_table()` : Extraction d'un tableau de cet élément
+- `html_attr()` : Extraction d'un attribut de cet élément (ex : liens)
+
+# Etape 1 : familiarisation avec le site web
+
+# Etape 2 : extraction du contenu d'une seule page web
+
+```{r}
+# Création d'une url d'un communiqué
+
+url_test <- "https://press.un.org/en/2023/sgsm22043.doc.htm"
+
+# Extraction du code html de la page
+(page_html <- read_html(url_test))
+
+# Extraction du titre du communiqué
+
+(title <- page_html %>% 
+  html_element(".page-header") %>% 
+  html_text())
+
+# Extraction du texte du communiqué
+
+(text <- page_html %>% 
+  html_element(".field--type-text-with-summary") %>% 
+  html_text())
+
+# Extraction de la date du communiqué
+
+(date <- page_html %>% 
+  html_element("time") %>% 
+  html_text())
+
+# Extraction des keywords
+
+(keywords <- page_html %>% 
+  html_elements(".field__items a") %>% 
+  html_text() |> 
+        str_c(collapse = "|"))
+        
+(id <- page_html |> 
+    html_element(".field--name-field-symbol") |>
+    html_text())
+
+un_pr <- tibble(title, text, date, keywords, id)
+```
+
+## Etape 3 : extraction des urls de tous les communiqués
+
+```{r}
+ex_urls <- "https://press.un.org/en/content/secretary-general/press-release" |> 
+    read_html() |>
+    html_elements("h3 > a") |> 
+    html_attr("href")
+
+ex_urls <- str_c("https://press.un.org", ex_urls)
+
+ex_urls
+```
+
+- Souvent, on veut plus d'une url (et là, c'est là que commence le fun et la beauté de l'automatisation !)
+
+- Les urls sont parfois structurées de façon logique ce qui rend l'extraction facile
+    - https://press.un.org/en/content/secretary-general/press-release?page=1
+    - https://press.un.org/en/content/secretary-general/press-release?page=2
+    - https://press.un.org/en/content/secretary-general/press-release?page=3
+
+- Dans ce cas, le workflow consiste à : 
+    - Identifier toutes les urls des pages où il y a des communiqués de presse
+    - Pour chacune de ces pages, collecter les urls des communiqués de presses
+    - Pour chaque communiqué de presse : extraire le titre, l'auteur, la date et le texte
+
+```{r}
+urls <- str_c("https://press.un.org/en/content/secretary-general/press-release?page=", 1:1936)
+
+
+collect_urls <- function(x) {
+    page <- read_html(x)
+    
+    urls <- tibble(
+        link = page |>
+            html_elements("h3 > a") |>
+            html_attr("href")
+    ) |> 
+        mutate(link = str_c("https://press.un.org", link))
+}
+
+# Test sur 10 pages
+pr_links <- map_df(urls[1:10], collect_urls, .progress = T)
+```
+
+# Etape 4 : Collecter le texte de chaque communiqué de presse
+
+```{r}
+# Write a function to scrap everything
+
+
+(title <- page_html %>% 
+  html_element(".page-header") %>% 
+  html_text())
+
+# Extraction du texte du communiqué
+
+(text <- page_html %>% 
+  html_element(".field--type-text-with-summary") %>% 
+  html_text())
+
+# Extraction de la date du communiqué
+
+(date <- page_html %>% 
+  html_element("time") %>% 
+  html_text())
+
+# Extraction des keywords
+
+(keywords <- page_html %>% 
+  html_elements(".field__items a") %>% 
+  html_text() |> 
+        str_c(collapse = "|"))
+        
+(id <- page_html |> 
+    html_element(".field--name-field-symbol") |>
+    html_text())
+
+collect_content <- function(x) {
+    # Get html code of page
+    page <- read_html(x)
+    # Create dataframe with the different elements
+    
+    tibble(
+        # Extract title
+        title = html_element(page, ".page-header") |>
+            html_text(),
+        text = html_element(page, ".field--type-text-with-summary") |>
+            html_text(),
+        date = html_element(page, "time") |>
+            html_text() |> 
+            dmy(),
+        keywords = html_elements(page, ".field__items a") |>
+            html_text() |> 
+            str_c(collapse = "|"),
+        id = html_element(page, ".field--name-field-symbol") |>
+            html_text())
+}
+
+# Apply this function to all of the press releases urls
+
+(cp <- map_df(pr_links$link[1:10], collect_content, .progress = T))
+
+# If you run this for all the 19000 press releases, it will take a while
+```
+
+# Etape 6 : Explorer les données
+
+```{r}

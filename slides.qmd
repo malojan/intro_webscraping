@@ -1,0 +1,191 @@
+---
+title: "Collecter des données en ligne"
+subtitle: "Introduction au webscraping"
+author: "Malo Jan"
+date: "27/11/2023"
+format: 
+  revealjs:
+    slide-number: c/t
+    footer: "Collecter des données en ligne"
+    theme: simple
+    echo: true
+    incremental: true
+
+---
+
+## Plan
+
+Introduction à la **collecte de données** en ligne
+
+1. Objectifs et usages de la collecte de données en ligne
+2. Demo sur R 
+
+# Pourquoi collecter des données en ligne ? {.smaller}
+
+## Pourquoi collecter des données en ligne ? {.smaller}
+
+Croissance exponentielle de la quantité de données numériques : nouvelles opportunités pour la recherche en sciences sociales
+
+- Données numérisées (données *sur* le web) : 
+    - Pratiques d'open data des administrations/parlements/institutions internationales etc.
+    - Données d'archives numérisées
+- Données numériques (données *du* web):
+    - Réseaux sociaux : twitter, tiktok, même les applis de rencontres
+    - Traces numériques : 
+        - Ce que l'on recherche, ce que l'on clique, ce que l'on publie/partage
+        - Nous publions tous, partageons des choses sur le web, les acteurs et institutions que vous étudiez aussi
+
+## Pourquoi collecter des données en ligne ? {.smaller}
+
+<br>
+
+
+Tout contenu d'une page web est susceptible d'être utilisé comme données et être collecté pour une recherche en sceinces sociales
+
+- Qu'est-ce qui rend ces données différentes de celles que nous utilisons habituellement en sciences sociales ? 
+    - Des données structurées à des données non structurées
+    - De l'échantillon à la population ? Des données petites à des données big data ? 
+    - Pas d'intervention du chercheur
+
+- Quelle forme ? 
+    - Texte, images
+    - Interactions sociales, réseaux, liens
+
+## Où collecter des données en ligne ? {.smaller}
+
+- Où sont ces données ? 
+    - Open data : peuvent être téléchargées
+    - API (*Application Programming Interface*): ex [Twitter API](https://developer.twitter.com/en/docs/twitter-api), New York Times or Guardian API
+    - Majoritairement sur des pages web
+
+- Pour exploiter ces données nous avons besoin : 
+    - De moyens de collecte automatique
+    - De formater, de mettre en forme des données potentiellement non structurées
+
+## Qu'est-ce que le webscraping ? {.smaller}
+
+<br>
+
+::: {.fragment fragment-index=1}
+
+> Le webscraping est une technique de collecte de données sur le web qui consiste à extraire des données d'une page web 
+
+:::
+
+::: {.fragment fragment-index=2}
+
+- Nous sommes tous des webscrapers manuels : copier/coller/télécharger des données depuis le web quotidiennement
+- Mais nous pouvons automatiser tout cela : les machines sont plus rapides et plus extensives que nous
+
+::: 
+
+## Pourquoi le webscraping ? {.smaller}
+
+- Exemple de ce que vous pourriez faire avec le webscraping : 
+    - Récupérer des données sur les réseaux sociaux ou wikipedia
+    - Télécharger et parser tous les communiqués de presse de l'organisation que vous étudiez
+    - Télécharger automatiquement et stocker tous les pdfs que vous voulez depuis un site web
+- Pas seulement pour une analyse quantitative, il s'agit de collectier des données et pas d'analyse : 
+    - Peut vous aider à stocker, télécharger des documents que vous pouvez analyser de manière qualitative
+    - Mais parce que c'est facilement *scalable*, vous avez généralement beaucoup de données, adaptées à la quantification
+- Mais cela nécessite des compétences de programmation
+
+# Comment le web est-il écrit ? 
+
+## Comment le web est-il écrit ? {.smaller}
+
+- Le webscraping implique une compréhension minimum de la façon dont le web est écrit : qu'est-ce qu'une page web ? 
+    - Du code : interprété par un navigateur (ex : Chrome, Mozilla)
+    
+- Le code d'une page web peut être écrit en :
+    - HTML (**Hypertext markup language**) : structure et contenu
+    - CSS : style (ex : police, couleur)
+    - Javascript : fonctionnalités, contenu dynamique, recherche, menus déroulants etc. 
+
+- Un exemple à partir des [communiqués](https://press.un.org/en/content/secretary-general/press-release) de presse du secrétaire général des nations unies
+
+## Le language html {.smaller}
+
+- Language à balise
+- Le contenu du web est écrit dans des tags, qui peuvent avoir des attributs
+- Balises les plus courantes en html
+    - div
+    - p
+    - h1, h2, h3
+- Le web scraping consiste à extraire le contenu du code source html pour obtenir certaines informations
+- CTRL + U /Selector Gadget
+
+# Ethique et webscraping 
+
+## Ethique sur l'accès aux données
+
+- Web scraping peut-être illégal
+    - Accès à des données privées, surcharge des serveurs
+    - Les sites web peuvent vous bloquer/suivre
+
+- Bonnes pratiques :
+    - API first
+    - Vérifier les permissions (*robot.txt*)
+    - Ralentir le rythme du scraping
+
+- Evolution de la [regulation](https://www.ouvrirlascience.fr/la-fouille-de-textes-et-de-donnees-a-des-fins-de-recherche-une-pratique-confirmee-et-desormais-operationnelle-en-droit-francais/)
+
+## Ethique sur l'utilisation des données {.smaller}
+
+:::: {.columns}
+::: {.column width="60%"}
+
+- Potentiellement des données personnelles : et donc RGPD
+- Les données avec des informations identifiantes peuvent être facilement accessible
+- Ancienne API de twitter : possibilité de télécharger tous les tweets d'un utilisateur en 2 lignes de code
+- Réflexion à avoir sur l'usage des données
+
+:::
+
+::: {.column width="40%"}
+
+![](figures/scrap.png){.absolute top=100 right=10 width="400" height="400"}
+:::
+::::
+
+# Autres challenges du webscraping
+
+## Pages complexes et dynamiques {.smaller}
+
+:::: {.columns}
+::: {.column width="60%"}
+
+- Les pages webs sont parfois complexes et dynamiques (javascript)
+- Des stratégies de scraping plus complexes sont nécessaires
+- Selenium : permet de simuler des clics sur un navigateur depuis R ou Python
+- Les pages webs sont aussi changées, actualisées : votre programme peut fonctionner un jour et pas le lendemain, bonne pratique de télécharger les pages sur votre ordinateur
+- Post-API age ? Ce qui est disponible aujourd'hui peut ne pas l'être demain : FB 2018, Twitter aujourd'hui
+
+:::
+
+::: {.column width="40%"}
+![](figures/scrap2.png){.absolute top=100 right=0 width="300" height="300"}
+:::
+
+::::
+
+## Dirty data
+
+- Le webscraping n'est souvent que la première étape et peut impliquer beaucoup de nettoyage, manipulation de texte, parsing pour avoir des informations structurées
+- Nécessite des compétences et des outils supplémentaires comme les *expressions régulières* (regex) : voir le package [stringr](https://stringr.tidyverse.org/) en R
+- Ex with [Regexr](https://regexr.com/) 
+
+## Comment extraire des données et automatiser la collecte ? {.smaller}
+
+- Utilisation d'un logiciel : R (packages : [rvest](https://rvest.tidyverse.org/), [httr](https://cran.r-project.org/web/packages/httr/vignettes/quickstart.html), Rselenium) or Python (BeautifoulSoup)
+- Ecrire un programme pour extraire certaines informations sur des pages web
+
+- **Ce dont vous avez besoin** :
+    - Les urls des pages que vous voulez scraper
+    - Les balises html/css selectors qui localisent les informations que vous voulez
+
+- **Différents workflows**
+    - Une page vs plusieurs pages
+    - Pages statiques vs dynamiques
+
+# Demo dans R ! 
