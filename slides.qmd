@@ -2,7 +2,7 @@
 title: "Collecter des données en ligne"
 subtitle: "Introduction au webscraping"
 author: "Malo Jan"
-date: "27/11/2023"
+date: "2023-11-25"
 format: 
   revealjs:
     slide-number: c/t

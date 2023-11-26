@@ -1,9 +1,8 @@
 ---
-output: html_document
-editor_options: 
-  chunk_output_type: console
+title : "Scraper les communiqués de presse du secrétaire général des nations unies"
+author: "Malo Jan"
+format: pdf
 ---
-
 
 ```{r}
 # Import packages
@@ -20,6 +19,8 @@ Principales fonctions d'`rvest`  :
 - `html_attr()` : Extraction d'un attribut de cet élément (ex : liens)
 
 # Etape 1 : familiarisation avec le site web
+
+- [Communiqués de presse du secrétaire général des nations unies](https://press.un.org/en/content/secretary-general/press-release)
 
 # Etape 2 : extraction du contenu d'une seule page web
 
@@ -91,6 +92,7 @@ ex_urls
 ```{r}
 urls <- str_c("https://press.un.org/en/content/secretary-general/press-release?page=", 1:1936)
 
+# Fonction pour collecter les urls des communiqués de presse
 
 collect_urls <- function(x) {
     page <- read_html(x)
@@ -104,7 +106,10 @@ collect_urls <- function(x) {
 }
 
 # Test sur 10 pages
-pr_links <- map_df(urls[1:10], collect_urls, .progress = T)
+
+pr_links <- map_df(urls, collect_urls, .progress = T)
+
+write_csv(pr_links, "data/pr_links.csv")
 ```
 
 # Etape 4 : Collecter le texte de chaque communiqué de presse
@@ -163,11 +168,99 @@ collect_content <- function(x) {
 
 # Apply this function to all of the press releases urls
 
-(cp <- map_df(pr_links$link[1:10], collect_content, .progress = T))
+(cp <- map(pr_links$link, safely(collect_content), .progress = T))
 
-# If you run this for all the 19000 press releases, it will take a while
+cp_df <- cp |> 
+    map_df("result")
+
+cp_df <- cp_df |> 
+    mutate(year = str_sub(date, 1, 4) |> as.numeric(),
+           secretary_general = case_when(
+               date >= "2017-01-01" ~ "Antonio Guterres",
+               date >= "2007-01-01" ~ "Ban Ki-Moon",
+               date >= "1997-01-01" ~ "Kofi Annan",
+               date >= "1992-01-01" ~ "Boutros Boutros-Ghali"))
+
+# Write the dataframe to a csv file
+
+# write_csv(cp_df, "data/cp_df.csv")
+
+# If you run this for all the 19354 press releases, it will take several hours
+
 ```
 
 # Etape 6 : Explorer les données
 
 ```{r}
+cp_df <- read_csv("data/cp_df_all.csv")
+
+# Evolution du nombre de communiqués de presse par année et par secrétaire général
+
+cp_df |> 
+    ggplot(aes(date, fill = secretary_general)) +
+    geom_histogram(bins =25) +
+    scale_fill_viridis_d() +
+    theme_minimal()
+```
+
+
+```{r}
+# Exploring keywords
+
+cp_df |> 
+    separate_rows(keywords, sep = "\\|") |> 
+    count(keywords) |> 
+    filter(keywords != "") |> 
+    arrange(desc(n)) 
+
+cp_df |> 
+    separate_rows(keywords, sep = "\\|") |> 
+    count(keywords) |> 
+    filter(keywords != "") |> 
+    arrange(desc(n)) |> 
+    filter(n > 100) |> 
+    mutate(keywords = fct_reorder(keywords, n)) |> 
+    ggplot(aes(keywords, n)) +
+    geom_col() +
+    coord_flip() +
+    theme_minimal()
+
+ggsave("figures/unsg_keywords.png", width = 10, height = 6, dpi = 300)
+
+```
+
+
+```{r}
+# Keyword search
+
+cp_df <- cp_df |> 
+    mutate(
+        climate = str_detect(text, "climate change|global warming|greenhouse gas|carbon dioxide|CO2 emissions|climate action|climate crisis|climate emergency|climate catastrophe|climate disaster|climate chaos"),
+    )
+
+climate_shares <- cp_df |> 
+    group_by(year) |>
+    count(climate) |> 
+    mutate(prop = n / sum(n)) |>
+    filter(climate == TRUE) 
+
+climate_shares |> 
+    ggplot(aes(x = year, y = prop)) +
+    geom_point() +
+    geom_line() + 
+    scale_y_continuous("Press releases mentioning climate change", labels = scales::percent) +
+    scale_x_continuous("Year") +
+    theme_minimal() +
+    labs(caption = "Data : UNSG press releases")
+
+ggsave("figures/climate_shares.png", width = 10, height = 6, dpi = 300)
+```
+
+```{r}
+cp_df |> 
+    filter(climate == TRUE, year == 2006) |> 
+    view()
+```
+
+
+
